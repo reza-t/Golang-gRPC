@@ -20,9 +20,11 @@ func main() {
 	defer cc.Close()
 
 	c := calculatorpb.NewCalculatorServiceClient(cc)
+
 	// doUnary(c)
 
-	doServerStreaming(c)
+	// doServerStreaming(c)
+
 }
 
 func doUnary(c calculatorpb.CalculatorServiceClient) {
@@ -48,7 +50,7 @@ func doServerStreaming(c calculatorpb.CalculatorServiceClient) {
 	fmt.Println("staring to do a PrimeServerStreaming RPC...")
 
 	req := &calculatorpb.PrimeNumberDecompositionRequest{
-		Number: 99999,
+		Number: 9999,
 	}
 
 	stream, err := c.PrimeNumberDecomposition(context.Background(), req)
@@ -66,7 +68,5 @@ func doServerStreaming(c calculatorpb.CalculatorServiceClient) {
 		}
 
 		fmt.Println(res.GetPrimeFactor())
-
 	}
-
 }

@@ -25,7 +25,9 @@ func main() {
 
 	// doServerStreaming(c)
 
-	doClientStreaming(c)
+	// doClientStreaming(c)
+
+	doBiDiStreaming(c)
 
 }
 
@@ -97,4 +99,47 @@ func doClientStreaming(c calculatorpb.CalculatorServiceClient) {
 	}
 
 	fmt.Printf("The Average is: %v", res.GetAverage())
+}
+
+func doBiDiStreaming(c calculatorpb.CalculatorServiceClient) {
+	stream, err := c.FindMaximum(context.Background())
+
+	if err != nil {
+		log.Fatalf("Error while opening stream: %v\n", err)
+		return
+	}
+
+	waitC := make(chan struct{})
+
+	go func() {
+		for {
+			err := stream.Send(&calculatorpb.FindMaximumRequest{
+				Number: 1,
+			})
+
+			if err == io.EOF {
+				log.Fatalf("End of the file")
+
+				break
+			}
+
+			if err != nil {
+				break
+			}
+		}
+		close(waitC)
+	}()
+
+	go func() {
+		for {
+			res, err := stream.Recv()
+			if err != nil {
+				break
+			}
+			fmt.Println(res.GetNumber())
+		}
+		close(waitC)
+	}()
+
+	<-waitC
 }

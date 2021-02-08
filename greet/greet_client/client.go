@@ -9,6 +9,8 @@ import (
 
 	"github.com/reza-t/grpc-go-course/greet/greetpb"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func main() {
@@ -28,7 +30,9 @@ func main() {
 
 	// doClientStreaming(c)
 
-	doBiDiStreaming(c)
+	// doBiDiStreaming(c)
+
+	doUnaryWithDeadLine(c)
 
 }
 
@@ -185,4 +189,31 @@ func doBiDiStreaming(c greetpb.GreetServiceClient) {
 
 	// block until everything is done
 	<-waitC
+}
+
+func doUnaryWithDeadLine(c greetpb.GreetServiceClient) {
+	fmt.Println("Starting to do a UnaryWithDeadLine RPC...")
+	req := &greetpb.GreetWithDeadLineRequest{
+		Greeting: &greetpb.Greeting{
+			FirstName: "Reza",
+			LastName:  "Taleghani",
+		},
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	res, err := c.GreetWithDeadLine(ctx, req)
+	if err != nil {
+		statusErr, ok := status.FromError(err)
+		if ok {
+			if statusErr.Code() == codes.DeadlineExceeded {
+				fmt.Println("Timeout was hit! Deadline was exceeded")
+			}
+		} else {
+			log.Fatalf("error while calling GreetWith DeadLine RPC: %v", statusErr)
+		}
+
+		return
+	}
+	log.Printf("Response from Greet: %v", res.Result)
 }

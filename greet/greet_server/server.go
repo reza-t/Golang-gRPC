@@ -11,6 +11,8 @@ import (
 
 	"github.com/reza-t/grpc-go-course/greet/greetpb"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type server struct{}
@@ -26,20 +28,26 @@ func (*server) Greet(ctx context.Context, req *greetpb.GreetRequest) (*greetpb.G
 	return res, nil
 }
 
-// func (*server) GreetManyTimes(req *greetpb.GreetManyTimesRequest, stream greetpb.GreetService_GreetManyTimesServer) error {
-// 	fmt.Printf("GreetManyTimes function was invoked with %v\n", req)
+func (*server) GreetWithDeadLine(ctx context.Context, req *greetpb.GreetWithDeadLineRequest) (
+	*greetpb.GreetWithDeadLineResponse, error) {
+	fmt.Printf("Greet function was invoked with %v\n", req)
 
-// 	firstName := req.GetGreeting().GetFirstName()
-// 	for i := 0; i < 10; i++ {
-// 		result := "Hello " + firstName + " number " + strconv.Itoa(i)
-// 		res := &greetpb.GreetManyTimesResponse{
-// 			Result: result,
-// 		}
-// 		stream.Send(res)
-// 		time.Sleep(1000 * time.Millisecond)
-// 	}
-// 	return nil
-// }
+	for i := 0; i < 3; i++ {
+		if ctx.Err() == context.Canceled {
+			fmt.Println("The client canceled the request!")
+			return nil, status.Error(codes.Canceled, "the client canceled the request")
+		}
+		time.Sleep(1 * time.Second)
+	}
+
+	firstName := req.GetGreeting().GetFirstName()
+	result := "Hello " + firstName
+	res := &greetpb.GreetWithDeadLineResponse{
+		Result: result,
+	}
+
+	return res, nil
+}
 
 func (*server) GreetManyTimes(req *greetpb.GreetManyTimesRequest, stream greetpb.GreetService_GreetManyTimesServer) error {
 	fmt.Printf("GreetManyTimes function was invoked with %v\n", req)
